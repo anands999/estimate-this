@@ -58,7 +58,7 @@ def unit(x):
         else:
             dotP=float(p.dot(x,xT))
 
-       if  dotP != 1:
+        if dotP != 1:
             axis=x/np.linalg.norm(x,2)
         else:
             axis=x
