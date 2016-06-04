@@ -26,9 +26,15 @@ def c3(a):
     return c3
 
 def skew(a):
-    a1=a[0]
-    a2=a[1]
-    a3=a[2]
+    if type(a) is np.ndarray:
+        a1=a[0]
+        a2=a[1]
+        a3=a[2]
+    elif type(a) is np.matrix:
+        a1=float(a[0])
+        a2=float(a[1])
+        a3=float(a[2])
+
     skew=np.matrix('{} {} {}; {} {} {}; {} {} {}'.format(0,-a3,a2,a3,0,-a1,-a2,a1,0))
     return skew
 
@@ -38,11 +44,40 @@ def rotRPY(r,p,y):
     cy=c3(y)
     return cy*cp*cr
 
-def rotEulAx(theta, ax_in):
-    if np.dot(ax_in,ax_in) != 1:
-        axis=ax_in/np.linalg.norm(ax_in,2)
+def unit(x):
+    if type(x) is np.ndarray or type(x) is np.array:
+        if np.dot(x,x) != 1:
+            axis=x/np.linalg.norm(x,2)
+        else:
+            axis=x
+
+    elif type(x) is np.matrix:
+        xT=x.T
+        if x.shape[0] is 3 and x.shape[1] is 1:
+            dotP=float(np.dot(xT,x))
+        else:
+            dotP=float(p.dot(x,xT))
+
+       if  dotP != 1:
+            axis=x/np.linalg.norm(x,2)
+        else:
+            axis=x
+
+    return axis
+
+def col(x):
+    if x is np.matrix:
+        if x.shape[0] is 3 and x.shape[1] is 1:
+            xout=x
+        else:
+            xout=x.T
     else:
-        axis=ax_in
+        xout=np.matrix(x).T
+    return xout
+
+def rotEulAx(theta, ax_in):
+
+    axis=unit(ax_in)
 
     c=np.cos(theta)
     s=np.sin(theta)
@@ -55,6 +90,28 @@ def poisson(C,w):
     Cdot=-wX*C
     return Cdot
 
+def triad(mag, accel):
+    x1b=col(unit(mag))
+    x2b=col(unit(accel))
 
+    v1b=x1b
+    v2b=skew(x1b)*x2b
+    v2b=unit(v2b)
+    v3b=skew(v1b)*v2b
+    v3b=unit(v3b)
 
+    x1a=col(np.array([1,0,0]))
+    x2a=col(np.array([0,0,1]))
+
+    v1a=x1a
+    v2a=skew(x1a)*x2a
+    v2a=unit(v2a)
+    v3a=skew(v1a)*v2a
+    v3a=unit(v3a)
+
+    C1=np.column_stack((v1b,v2b,v3b))
+    C2=np.column_stack((v1a,v2a,v3a))
+
+    C=C1*C2.T
+    return C
 
