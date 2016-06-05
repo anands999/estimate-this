@@ -67,29 +67,23 @@ def listener():
     rospy.Subscriber("/imu/mag",MagneticField,mag_measurement,args_mag)
 
     r=rospy.Rate(1000)
+
+    Cmag=np.matrix('6.909327e-01,-2.146449e-03,6.848350e-03;-2.146449e-03, 6.751378e-01, 2.575075e-03; 6.848350e-03, 2.575075e-03, 7.385365e-01')
+    bvec=np.array([-3.005217e1,1.328892e2,-6.558522e1])/1e9
+
     while not rospy.is_shutdown():
         if args_accel[1]% maxIt ==0:
             acc=args_accel[2].mean(axis=0)
             mag=args_mag[2].mean(axis=0)
 
-#            rospy.loginfo("%f %f %f",acc[0],acc[1],acc[2])
-#            rospy.loginfo("%f %f %f",mag[0],mag[1],mag[2])
-
             if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0:
-                C2=rm.c2(m.pi/3.)
-#                acc=C2*np.matrix('0.;0.;9.81')
-#                mag=C2*np.matrix('1.;0.;0')
 
-                bvec=np.array([-0.00684160, 0.00049319, 1.008052])
-#               mag=mag+bvec
-#               mag=rm.unit(mag)
-                Cinst=rm.triad(mag, acc)
+                Cinst=rm.triad(acc,mag)
                 rpy=rm.RPYfromC(Cinst)
                 for i in range(3):
                     rpy[i]=rpy[i]*180./m.pi
 
-
-                rospy.loginfo("%f %f %f %f %f %f", rpy[0], rpy[1], rpy[2],mag[0],mag[1],mag[2])
+                rospy.loginfo("%f %f %f", rpy[0], rpy[1], rpy[2])
 
 #        rospy.loginfo("%d",args_accel[1])
         r.sleep()

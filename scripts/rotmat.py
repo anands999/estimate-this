@@ -90,18 +90,22 @@ def poisson(C,w):
     Cdot=-wX*C
     return Cdot
 
-def triad(mag, accel):
+def triad(accel,mag):
+
     x1b=col(unit(mag))
     x2b=col(unit(accel))
+
     v1b=x1b
     v2b=skew(x1b)*x2b
     v2b=unit(v2b)
     v3b=skew(v1b)*v2b
     v3b=unit(v3b)
 
+    # unitized gravity vector
+    x1a=np.matrix('0.;0.;1.')
 
-    x1a=np.matrix('1.;0.;0.')
-    x2a=np.matrix('0.;0.;1.')
+    # magnetic dipole
+    x2a=unit(np.matrix('18886.3; -2349.7; 50389.2'))
 
     v1a=x1a
     v2a=skew(x1a)*x2a
@@ -125,7 +129,6 @@ def RPYfromC(C):
         roll=np.arctan2(s1c2,c1c2)
 
         c1=np.cos(roll)
-        print c1
         if abs(c1) > 0.0001:
             c2=c1c2/c1
             s2=C.item(2,0) #float(C[2][0])
