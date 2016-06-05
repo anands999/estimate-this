@@ -92,8 +92,8 @@ def poisson(C,w):
 
 def triad(accel,mag):
 
-    x1b=col(unit(mag))
-    x2b=col(unit(accel))
+    x2b=col(unit(mag))
+    x1b=col(unit(accel))
 
     v1b=x1b
     v2b=skew(x1b)*x2b
