@@ -2,10 +2,14 @@
 
 import math as m
 import numpy as np
+import rospy as rp
+import collections
+
+estimator_output=collections.namedtuple('Estimator_Output', ['Cdot','bdot'])
 
 def eye():
     R=np.matrix('1 0 0;0 1 0; 0 0 1')
-    return R;
+    return R
 
 def c1(a):
     c=np.cos(a)
@@ -37,6 +41,20 @@ def skew(a):
 
     skew=np.matrix('{} {} {}; {} {} {}; {} {} {}'.format(0,-a3,a2,a3,0,-a1,-a2,a1,0))
     return skew
+
+def skewInv(A):
+    vec=np.matrix('0.;0.;0.')
+
+    if type(A) is np.matrix:
+        vec[0]=-A.item(5)
+        vec[1]=A.item(2)
+        vec[2]=-A.item(1)
+
+    return vec
+
+def ProjAnti(A):
+    if type(A) is np.matrix:
+        return 0.5*(A-A.transpose(1,0))
 
 def rotRPY(r,p,y):
     cr=c1(r)
@@ -107,6 +125,7 @@ def triad(accel,mag):
     # magnetic dipole
     x2a=unit(np.matrix('18886.3; -2349.7; 50389.2'))
 
+
     v1a=x1a
     v2a=skew(x1a)*x2a
     v2a=unit(v2a)
@@ -142,3 +161,23 @@ def RPYfromC(C):
 
     return [roll, pitch, yaw]
 
+def mahoneyPoisson(Cea, Cba, bhat, w_y_a):
+    k11=rp.get_param('/mahoney_node/Kb11')
+    k22=rp.get_param('/mahoney_node/Kb22')
+    k33=rp.get_param('/mahoney_node/Kb33')
+    kp=rp.get_param('/mahoney_node/Kprop')
+
+    Kb=np.matrix(np.diag(np.array(k11,k22,k33)))
+
+
+    Cbe=Cba*np.transpose(Cea)
+    CbeTr=np.trace(Cbe)
+    PaCbe=np.skewInv(np.ProjAnti(Cbe))
+    eVec=-1.0/(1.0+CbeTr)*PaCbe
+
+    CeaDot=-skew(w_y_a-bhat+kp*eVec)*Cea
+    bhatDot=-Kp*eVec
+
+
+    mahoneyOut=estimator_output(Cdot=CeaDot,bdot=bhatDot)
+    return mahoneyOut

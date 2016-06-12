@@ -1,0 +1,21 @@
+<launch>
+
+    <group ns="mahoney_node">
+        <group ns="estGains">
+            <param name="Kb11" value="0.075"/>
+            <param name="Kb22" value="0.075"/>
+            <param name="Kb33" value="0.075"/>
+            <param name="Kprop" value="1.0"/>
+        </group>
+            <node pkg="estimate_this" name="estimator" type="mahoneyRun.py" args="$(arg avgNum)" output="screen">
+                <param name="topic_name" value="mahoney_attitude"/>
+            </node>
+    </group>
+
+
+<!--    <group ns="sensor_node">-->
+            <node pkg="myahrs_driver" name="AttitudeSensor" type="myahrs_driver"/>
+<!--    </group>-->
+
+
+</launch>
