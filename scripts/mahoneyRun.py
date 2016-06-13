@@ -10,21 +10,23 @@ from estimate_this.msg import rpy
 
 global maxIt
 
-def accel_measurement(data,args):
+def imu_measurement(data,args):
     #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
 
     args[0][0]=data.linear_acceleration.x
     args[0][1]=data.linear_acceleration.y
     args[0][2]=data.linear_acceleration.z
 
-    args[1]=args[1]+1
+    args[1][0]=data.angular_velocity.x
+    args[1][1]=data.angular_velocity.y
+    args[1][2]=data.angular_velocity.z
 
-    i=args[1]
+    args[2]=args[2]+1
 
-    args[2][i%maxIt]=args[0]
+    i=args[2]
 
-    if i%maxIt == 0:
-        xavg=args[2].mean(axis=0)
+    args[3][i%maxIt]=args[0]
+    args[4][i%maxIt]=args[1]
 
 def mag_measurement(data,args):
     #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
@@ -39,42 +41,59 @@ def mag_measurement(data,args):
 
     args[2][i%maxIt]=args[0]
 
-
-def triadEstimation():
+def mahoneyEstimator():
     global maxIt
 
-    rospy.init_node('triadEstimation', anonymous=True)
+    rospy.init_node('mahoneyEstimator', anonymous=True)
 
     i=0
     j=0
     acc=np.zeros(3)
     mag=np.zeros(3)
+    ang_vel=np.zeros(3)
 
     accel_avg=np.zeros((maxIt,3))
+    angvel_avg=np.zeros((maxIt,3))
     mag_avg=np.zeros((maxIt,3))
 
 
-    args_accel=[acc,i,accel_avg]
+    args_imu=[acc,ang_vel,i,accel_avg,angvel_avg]
     args_mag=[mag,j,mag_avg]
 
     rospy.loginfo("Running, with max it: %d", maxIt)
 
-    rospy.Subscriber("/imu/data_raw",Imu,accel_measurement,args_accel)
+    rospy.Subscriber("/imu/data_raw",Imu,imu_measurement,args_imu)
     rospy.Subscriber("/imu/mag",MagneticField,mag_measurement,args_mag)
 
-    pub=rospy.Publisher('triadAtt',rpy, queue_size=10)
+    pub=rospy.Publisher('mahoneyAtt',rpy, queue_size=10)
 
     r=rospy.Rate(1000)
 
+    Cea=np.eye(3)
+    bhat=np.matrix('0;0;0')
+
+    now=rospy.get_time()
+
     while not rospy.is_shutdown():
-        if args_accel[1]% maxIt ==0:
-            acc=args_accel[2].mean(axis=0)
+        if args_imu[2]% maxIt ==0:
+
+            acc=args_imu[3].mean(axis=0)
+            w_y_a=args_imu[4].mean(axis=0)
             mag=args_mag[2].mean(axis=0)
 
-            if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0:
+            if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0 and np.linalg.norm(w_y_a,2) !=0:
 
-                Cinst=rm.triad(acc,mag)
-                rllptchyw=rm.RPYfromC(Cinst)
+                Cba=rm.triad(acc,mag)
+                derivatives=rm.mahoneyPoisson(Cea, Cba, bhat, w_y_a)
+
+                before=now
+                now=rospy.get_time()
+                dT=now-before
+
+                Cea=Cea+derivatives.Cdot*dT
+                bhat=bhat+derivatives.bdot*dT
+
+                rllptchyw=rm.RPYfromC(Cea)
                 for i in range(3):
                     rllptchyw[i]=rllptchyw[i]*180./m.pi
 
@@ -85,5 +104,10 @@ def triadEstimation():
 
 if __name__=='__main__':
     global maxIt
-    maxIt=int(sys.argv[1])
-    triadEstimation()
+    if len(sys.argv) is 1:
+        maxIt=100
+    else:
+        maxIt=int(sys.argv[1])
+    print len(sys.argv)
+    mahoneyEstimator()
+

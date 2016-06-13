@@ -162,21 +162,23 @@ def RPYfromC(C):
     return [roll, pitch, yaw]
 
 def mahoneyPoisson(Cea, Cba, bhat, w_y_a):
-    k11=rp.get_param('/mahoney_node/Kb11')
-    k22=rp.get_param('/mahoney_node/Kb22')
-    k33=rp.get_param('/mahoney_node/Kb33')
-    kp=rp.get_param('/mahoney_node/Kprop')
+#    k11=rp.get_param('/mahoney_node/Kb11')
+#    k22=rp.get_param('/mahoney_node/Kb22')
+#    k33=rp.get_param('/mahoney_node/Kb33')
+#    kp=rp.get_param('/mahoney_node/Kprop')
 
-    Kb=np.matrix(np.diag(np.array(k11,k22,k33)))
+    k11=0.075
+    kp=1.
+    Kb=np.matrix(np.diag(np.array([k11,k11,k11])))
 
 
     Cbe=Cba*np.transpose(Cea)
     CbeTr=np.trace(Cbe)
-    PaCbe=np.skewInv(np.ProjAnti(Cbe))
+    PaCbe=skewInv(ProjAnti(Cbe))
     eVec=-1.0/(1.0+CbeTr)*PaCbe
 
     CeaDot=-skew(w_y_a-bhat+kp*eVec)*Cea
-    bhatDot=-Kp*eVec
+    bhatDot=-Kb*eVec
 
 
     mahoneyOut=estimator_output(Cdot=CeaDot,bdot=bhatDot)
