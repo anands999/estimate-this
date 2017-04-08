@@ -28,6 +28,7 @@ def imu_measurement(data,args):
 
     args[3][i%maxIt]=args[0]
     args[4][i%maxIt]=args[1]
+    args[5]=data.header.stamp.secs+data.header.stamp.nsecs/1e9
 
 def mag_measurement(data,args):
     #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
@@ -56,10 +57,11 @@ def mahoneyEstimator():
     accel_avg=np.zeros((maxIt,3))
     angvel_avg=np.zeros((maxIt,3))
     mag_avg=np.zeros((maxIt,3))
+    imuTime=0.
+    magTime=0.
 
-
-    args_imu=[acc,ang_vel,i,accel_avg,angvel_avg]
-    args_mag=[mag,j,mag_avg]
+    args_imu=[acc,ang_vel,i,accel_avg,angvel_avg, imuTime]
+    args_mag=[mag,j,mag_avg,magTime]
 
     rospy.loginfo("Running, with max it: %d", maxIt)
 
@@ -78,9 +80,10 @@ def mahoneyEstimator():
 
     while not rospy.is_shutdown():
         if args_imu[2]% maxIt ==0:
-            acc=args_imu[3].mean(axis=0)
-            w_y_a=args_imu[4].mean(axis=0)
-            mag=args_mag[2].mean(axis=0)
+            acc=np.matrix(args_imu[3].mean(axis=0)).T
+            w_y_a=np.matrix(args_imu[4].mean(axis=0)).T
+            mag=np.matrix(args_mag[2].mean(axis=0)).T
+
             if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0:
 
                 Cba=attitude_estimators.triad(acc,mag)
@@ -88,27 +91,22 @@ def mahoneyEstimator():
                 for i in range(3):
                     rllptchyw[i]=rllptchyw[i]*180./m.pi
 
-                print rllptchyw
-
-#                Cba=Cba.transpose(1,0)
-
-                derivatives=attitude_estimators.mahoneyPoisson(Cba, Cea, bhat, w_y_a)
+                derivatives=attitude_estimators.mahoneyPoisson(Cea, Cba, bhat, w_y_a)
                 before=now
                 now=rospy.get_time()
+
                 dT=now-before
                 Cdot=np.matrix(derivatives.Cdot)
 
-#                print Cdot
-#                print Cea
-
-
                 Cea=rm.eulerIntegrateRotMat(Cea,Cdot, dT)
-#                sys.exit()
+
                 bhat=bhat+derivatives.bdot*dT
 
                 rllptchyw=rm.RPYfromC(Cea)
                 for i in range(3):
                     rllptchyw[i]=rllptchyw[i]*180./m.pi
+
+#                print rllptchyw
 
                 mahoneyMsg=Vector3()
 
@@ -127,5 +125,6 @@ if __name__=='__main__':
     else:
         maxIt=int(sys.argv[1])
     print len(sys.argv)
+#               print Cea
     mahoneyEstimator()
 

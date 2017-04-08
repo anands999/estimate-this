@@ -49,33 +49,20 @@ def mahoneyPoisson(Cea, Cba, bhat, w_y_a):
 #    kp=rp.get_param('/mahoney_node/Kprop')
 
     k11=0.0
-    kp=0.5
+    kp=1.0
     Kb=np.matrix(np.diag(np.array([k11,k11,k11])))
 
 
-#    Cbe=np.matrix(Cba)*np.matrix(Cea).T
     Cbe=Cba*Cea.T
 
-#    print Cbe
-#    print "------------------------Evec"
 
     CbeTr=np.trace(Cbe)
     PaCbe=rm.skewInv(rm.ProjAnti(Cbe))
     eVec=-1.0/(1.0+CbeTr)*PaCbe
 
-
-#    print PaCbe
-#    print -skew(w_y_a-bhat+kp*eVec)
-#     print eVec.transpose(1,0)
-#    print "------------------------"
-#    print -skew(kp*eVec)
-#    print
-#    CeaDot=-skew(w_y_a-bhat+kp*eVec)*Cea
-#    print "outside"
-#    print CeaDot
-
-
     CeaDot=-1.0*rm.skew(w_y_a+kp*eVec)*Cea
+
+
     bhatDot=-Kb*eVec
 
 
