@@ -3,6 +3,7 @@
 import math as m
 import numpy as np
 import rospy as rp
+from scipy import linalg as la
 import collections
 
 estimator_output=collections.namedtuple('Estimator_Output', ['Cdot','bdot'])
@@ -54,7 +55,7 @@ def skewInv(A):
 
 def ProjAnti(A):
     if type(A) is np.matrix:
-        return 0.5*(A-A.transpose(1,0))
+        return 0.5*(A-A.T)
 
 def rotRPY(r,p,y):
     cr=c1(r)
@@ -105,38 +106,16 @@ def rotEulAx(theta, ax_in):
 
 def poisson(C,w):
     wX=skew(w)
+
+
     Cdot=-wX*C
+
+#    print Cdot[0]
+#    print Cdot[1]
+#    print Cdot[2]
+
     return Cdot
 
-def triad(accel,mag):
-
-    x2b=col(unit(mag))
-    x1b=col(unit(accel))
-
-    v1b=x1b
-    v2b=skew(x1b)*x2b
-    v2b=unit(v2b)
-    v3b=skew(v1b)*v2b
-    v3b=unit(v3b)
-
-    # unitized gravity vector
-    x1a=np.matrix('0.;0.;1.')
-
-    # magnetic dipole
-    x2a=unit(np.matrix('18886.3; -2349.7; 50389.2'))
-
-
-    v1a=x1a
-    v2a=skew(x1a)*x2a
-    v2a=unit(v2a)
-    v3a=skew(v1a)*v2a
-    v3a=unit(v3a)
-
-    C1=np.column_stack((v1b,v2b,v3b))
-    C2=np.column_stack((v1a,v2a,v3a))
-
-    C=C1*C2.T
-    return C
 
 def RPYfromC(C):
     if C is not np.matrix and C.size is not 9:
@@ -148,9 +127,10 @@ def RPYfromC(C):
         roll=np.arctan2(s1c2,c1c2)
 
         c1=np.cos(roll)
-        if abs(c1) > 0.0001:
+        s2=C.item(2,0) #float(C[2][0])
+
+        if abs(c1) > 1e-3:
             c2=c1c2/c1
-            s2=C.item(2,0) #float(C[2][0])
             pitch=np.arctan2(s2,c2)
         else:
             pitch=np.arcsin(s2)
@@ -161,25 +141,20 @@ def RPYfromC(C):
 
     return [roll, pitch, yaw]
 
-def mahoneyPoisson(Cea, Cba, bhat, w_y_a):
-#    k11=rp.get_param('/mahoney_node/Kb11')
-#    k22=rp.get_param('/mahoney_node/Kb22')
-#    k33=rp.get_param('/mahoney_node/Kb33')
-#    kp=rp.get_param('/mahoney_node/Kprop')
+def eulerIntegrateRotMat(C,Cdot,dt):
+#    print C
+    C=C+Cdot*dt
+#    print C
+#    print "inside"
+#    print Cdot
+    if abs(la.det(C)-1.0) > 1e-4:
+#        print "adjust", la.det(C)
+        Ctst=np.real(la.inv(la.sqrtm(C*C.transpose(1,0))))
+        Cout=np.matrix(Ctst)*C
+    else:
+        Cout=C
+#    print"----------------------------------------------------"
+#    print C
+#    print "******************************************************"
+    return Cout
 
-    k11=0.075
-    kp=1.
-    Kb=np.matrix(np.diag(np.array([k11,k11,k11])))
-
-
-    Cbe=Cba*np.transpose(Cea)
-    CbeTr=np.trace(Cbe)
-    PaCbe=skewInv(ProjAnti(Cbe))
-    eVec=-1.0/(1.0+CbeTr)*PaCbe
-
-    CeaDot=-skew(w_y_a-bhat+kp*eVec)*Cea
-    bhatDot=-Kb*eVec
-
-
-    mahoneyOut=estimator_output(Cdot=CeaDot,bdot=bhatDot)
-    return mahoneyOut

@@ -5,8 +5,9 @@ import sys
 import math as m
 import numpy as np
 import rotmat as rm
+import attitude_estimators
 from sensor_msgs.msg import Imu, MagneticField
-from estimate_this.msg import rpy
+from geometry_msgs.msg import Vector3
 
 global maxIt
 
@@ -62,12 +63,13 @@ def mahoneyEstimator():
 
     rospy.loginfo("Running, with max it: %d", maxIt)
 
-    rospy.Subscriber("/imu/data_raw",Imu,imu_measurement,args_imu)
-    rospy.Subscriber("/imu/mag",MagneticField,mag_measurement,args_mag)
+    rospy.Subscriber("/IMU_RotData",Imu,imu_measurement,args_imu)
+    rospy.Subscriber("/IMU_MagData",MagneticField,mag_measurement,args_mag)
 
-    pub=rospy.Publisher('mahoneyAtt',rpy, queue_size=10)
 
-    r=rospy.Rate(1000)
+    pub=rospy.Publisher('mahoneyAtt',Vector3, queue_size=10)
+
+    r=rospy.Rate(100)
 
     Cea=np.eye(3)
     bhat=np.matrix('0;0;0')
@@ -76,28 +78,44 @@ def mahoneyEstimator():
 
     while not rospy.is_shutdown():
         if args_imu[2]% maxIt ==0:
-
             acc=args_imu[3].mean(axis=0)
             w_y_a=args_imu[4].mean(axis=0)
             mag=args_mag[2].mean(axis=0)
+            if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0:
 
-            if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0 and np.linalg.norm(w_y_a,2) !=0:
+                Cba=attitude_estimators.triad(acc,mag)
+                rllptchyw=rm.RPYfromC(Cba)
+                for i in range(3):
+                    rllptchyw[i]=rllptchyw[i]*180./m.pi
 
-                Cba=rm.triad(acc,mag)
-                derivatives=rm.mahoneyPoisson(Cea, Cba, bhat, w_y_a)
+                print rllptchyw
 
+#                Cba=Cba.transpose(1,0)
+
+                derivatives=attitude_estimators.mahoneyPoisson(Cba, Cea, bhat, w_y_a)
                 before=now
                 now=rospy.get_time()
                 dT=now-before
+                Cdot=np.matrix(derivatives.Cdot)
 
-                Cea=Cea+derivatives.Cdot*dT
+#                print Cdot
+#                print Cea
+
+
+                Cea=rm.eulerIntegrateRotMat(Cea,Cdot, dT)
+#                sys.exit()
                 bhat=bhat+derivatives.bdot*dT
 
                 rllptchyw=rm.RPYfromC(Cea)
                 for i in range(3):
                     rllptchyw[i]=rllptchyw[i]*180./m.pi
 
-                pub.publish(roll=rllptchyw[0],pitch=rllptchyw[1],yaw=rllptchyw[2])
+                mahoneyMsg=Vector3()
+
+                mahoneyMsg.x=rllptchyw[0]
+                mahoneyMsg.y=rllptchyw[1]
+                mahoneyMsg.z=rllptchyw[2]
+                pub.publish(mahoneyMsg)
 
 
         r.sleep()
