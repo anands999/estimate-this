@@ -43,7 +43,7 @@ def mag_measurement(data,args):
 
     args[2][i%maxIt]=args[0]
 
-def mahoneyEstimator():
+def mahoneyEstimator(rate):
     global maxIt
 
     rospy.init_node('mahoneyEstimator', anonymous=True)
@@ -71,7 +71,7 @@ def mahoneyEstimator():
 
     pub=rospy.Publisher('mahoneyAtt',Vector3, queue_size=10)
 
-    r=rospy.Rate(100)
+    r=rospy.Rate(rate)
 
     Cea=np.eye(3)
     bhat=np.matrix('0;0;0')
@@ -118,13 +118,39 @@ def mahoneyEstimator():
 
         r.sleep()
 
+def mahoney_help():
+    print
+    print "mahoneyRun.py - Mahoney-style complimentary attitude filter. "
+    print " "
+    print "Arguments:"
+    print "  -r:<rate>            Operating rate of filter. Default: 100 Hz."
+    print "  -i:<interations>     Number of IMU measurements to average before processing. Default is 1. Value of 1 assumes meaurements are coming at the same rate as filter frequency."
+
 if __name__=='__main__':
     global maxIt
-    if len(sys.argv) is 1:
-        maxIt=100
-    else:
-        maxIt=int(sys.argv[1])
-    print len(sys.argv)
-#               print Cea
-    mahoneyEstimator()
+
+    rate=100
+    maxIt=1
+
+    if len(sys.argv) > 1:
+        sys.argv.pop(0)
+        for x in sys.argv:
+            y=x.split(':')
+            if y[0] == "-r":
+                rate=dobule(y[1])
+            elif y[0] == "-i":
+                matIx=integer(y[1])
+            elif y[0] == "-h" or  y[0] == "-help":
+                mahoney_help()
+                sys.exit()
+            else:
+                print
+                print " Bad argument: \""+y[0]+"\""
+                mahoney_help()
+                sys.exit()
+    print
+    print "         Operating rate: "+str(rate)+" Hz"
+    print "Measurements to average: "+str(maxIt)
+
+    mahoneyEstimator(rate)
 
