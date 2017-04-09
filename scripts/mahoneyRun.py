@@ -65,8 +65,8 @@ def mahoneyEstimator(rate):
 
     rospy.loginfo("Running, with max it: %d", maxIt)
 
-    rospy.Subscriber("/IMU_RotData",Imu,imu_measurement,args_imu)
-    rospy.Subscriber("/IMU_MagData",MagneticField,mag_measurement,args_mag)
+    rospy.Subscriber("/imu/data_raw",Imu,imu_measurement,args_imu)
+    rospy.Subscriber("/imu/mag",MagneticField,mag_measurement,args_mag)
 
 
     pub=rospy.Publisher('mahoneyAtt',Vector3, queue_size=10)
