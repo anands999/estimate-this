@@ -42,15 +42,12 @@ def triad(accel,mag):
     return C
 
 
-def mahoneyPoisson(Cea, Cba, bhat, w_y_a):
-#    k11=rp.get_param('/mahoney_node/Kb11')
-#    k22=rp.get_param('/mahoney_node/Kb22')
-#    k33=rp.get_param('/mahoney_node/Kb33')
-#    kp=rp.get_param('/mahoney_node/Kprop')
+def mahoneyPoisson(Cea, Cba, bhat, w_y_a, gains):
 
-    k11=0.0
-    kp=1.0
-    Kb=np.matrix(np.diag(np.array([k11,k11,k11])))
+
+    kp=gains[0]
+    Kbias=gains[1]
+    Kbias=np.asmatrix(np.diag(Kbias))
 
 
     Cbe=Cba*Cea.T
@@ -60,11 +57,9 @@ def mahoneyPoisson(Cea, Cba, bhat, w_y_a):
     PaCbe=rm.skewInv(rm.ProjAnti(Cbe))
     eVec=-1.0/(1.0+CbeTr)*PaCbe
 
-    CeaDot=-1.0*rm.skew(w_y_a+kp*eVec)*Cea
+    CeaDot=-1.0*rm.skew(w_y_a-bhat+kp*eVec)*Cea
 
-
-    bhatDot=-Kb*eVec
-
+    bhatDot=-Kbias*eVec
 
     mahoneyOut=estimator_output(Cdot=CeaDot,bdot=bhatDot)
     return mahoneyOut

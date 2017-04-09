@@ -13,9 +13,9 @@ def imuModel(r0,p0,y0,w0):
 
     rospy.init_node('imuModel', anonymous=True)
 
-    pub_ImuMeas=rospy.Publisher('IMU_RotData',Imu, queue_size=10)
-    pub_MagField=rospy.Publisher('IMU_MagData',MagneticField,queue_size=10)
-    pub_EulerAng=rospy.Publisher('IMU_EulAngData',Vector3,queue_size=10)
+    pub_ImuMeas=rospy.Publisher('/imu/data_raw',Imu, queue_size=10)
+    pub_MagField=rospy.Publisher('/imu/mag',MagneticField,queue_size=10)
+    pub_EulerAng=rospy.Publisher('/imu/EulAngData',Vector3,queue_size=10)
     r=rospy.Rate(100)
     C=rm.rotRPY(r0,p0,y0)
 
