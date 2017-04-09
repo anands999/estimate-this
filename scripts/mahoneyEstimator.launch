@@ -13,9 +13,6 @@
     </group>
 
 
-<!--    <group ns="sensor_node">-->
-            <node pkg="myahrs_driver" name="AttitudeSensor" type="myahrs_driver"/>
-<!--    </group>-->
 
 
 </launch>
