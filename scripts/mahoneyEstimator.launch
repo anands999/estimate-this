@@ -1,16 +1,15 @@
 <launch>
-
-
+  <arg name="param_file" default="estimator_parameters.yaml"/>
+  <rosparam command="load" file="$(arg param_file)"/>
+  
   <group ns="IMU_Model">
     <arg name="IMU_w" default="0.0,0.0,0.0"/>
     <arg name="IMU_rpy" default="0.0,0.0,0.0"/>
-
-    <node pkg="estimate_this" name="imuLaunch" type="imuModel.py" args="-w:$(arg IMU_w) -e:$(arg IMU_rpy)"/>
+    <node pkg="estimate_this" name="imu_sim" type="imuModel.py" args="-w:$(arg IMU_w) -e:$(arg IMU_rpy)"/>
   </group>
 
   <group ns="Att_Estimator">
     <arg name="CF_rate" default="100"/>
-    <node pkg="estimate_this" name="CompFilt" type="mahoneyRun.py" args="-r:$(arg CF_rate)" />
+    <node pkg="estimate_this" name="forbes_filt" type="mahoneyRun.py" args="-r:$(arg CF_rate)" />
   </group>
-
 </launch>
