@@ -1,18 +1,16 @@
 <launch>
 
-    <group ns="mahoney_node">
-        <group ns="estGains">
-            <param name="Kb11" value="0.075"/>
-            <param name="Kb22" value="0.075"/>
-            <param name="Kb33" value="0.075"/>
-            <param name="Kprop" value="1.0"/>
-        </group>
-            <node pkg="estimate_this" name="estimator" type="mahoneyRun.py" args="$(arg avgNum)" output="screen">
-                <param name="topic_name" value="mahoney_attitude"/>
-            </node>
-    </group>
 
+  <group ns="IMU_Model">
+    <arg name="IMU_w" default="0.0,0.0,0.0"/>
+    <arg name="IMU_rpy" default="0.0,0.0,0.0"/>
 
+    <node pkg="estimate_this" name="imuLaunch" type="imuModel.py" args="-w:$(arg IMU_w) -e:$(arg IMU_rpy)"/>
+  </group>
 
+  <group ns="Att_Estimator">
+    <arg name="CF_rate" default="100"/>
+    <node pkg="estimate_this" name="CompFilt" type="mahoneyRun.py" args="-r:$(arg CF_rate)" />
+  </group>
 
 </launch>

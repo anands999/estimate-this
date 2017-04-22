@@ -134,7 +134,7 @@ if __name__=='__main__':
             elif y[0] == "-p":
                 param_namespace=y[1]
             elif y[0] == "-h" or  y[0] == "-help":
-                mahoney_help()
+                ukf_help()
                 sys.exit()
 #            else:
 #                print
