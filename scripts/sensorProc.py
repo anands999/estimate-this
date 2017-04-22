@@ -1,6 +1,11 @@
 #!/usr/bin/env python
 
-global maxIt
+import rospy
+
+if rospy.has_param('/sensors/maxIter'):
+    maxIt=rospy.get_param('/sensors/maxIter')
+else:
+    maxIt=1
 
 def imu_measurement(data,args):
 

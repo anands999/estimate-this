@@ -10,24 +10,24 @@ from sensor_msgs.msg import Imu, MagneticField
 from geometry_msgs.msg import Vector3
 import sensorProc as sP
 
-global maxIt
+if rospy.has_param('/sensors/maxIter'):
+    maxIt=rospy.get_param('/sensors/maxIter')
+else:
+    maxIt=1
 
 def SigmaPointFilter(rate, param_namespace):
-    global maxIt
 
     # get parameters
 #    filter_gains=[]
 #
-#    if rospy.has_param(param_namespace):
-#        filter_gains.append(rospy.get_param(param_namespace+'/kp'))
-#        filter_gains.append(rospy.get_param(param_namespace+'/Kbias'))
-#        imu_topic=rospy.get_param(param_namespace+"/imu_topic")
-#        mag_topic=rospy.get_param(param_namespace+"/mag_topic")
-#        rpy_topic=rospy.get_param(param_namespace+"/rpy_est_topic")
-#        bias_topic=rospy.get_param(param_namespace+"/bias_est_topic")
-#    else:
-#        print "Namespace \""+para_namespace+"\" not found. We're done here."
-#        sys.exit()
+    if rospy.has_param(param_namespace):
+        imu_topic=rospy.get_param(param_namespace+"/imu_topic")
+        mag_topic=rospy.get_param(param_namespace+"/mag_topic")
+        rpy_topic=rospy.get_param(param_namespace+"/rpy_est_topic")
+        bias_topic=rospy.get_param(param_namespace+"/bias_est_topic")
+    else:
+        print "Namespace \""+para_namespace+"\" not found. We're done here."
+        sys.exit()
 
     rospy.init_node('SigmaPointFilter', anonymous=True)
 
@@ -67,9 +67,6 @@ def SigmaPointFilter(rate, param_namespace):
 
     now=rospy.get_time()
 
-
-
-
     while not rospy.is_shutdown():
         if args_imu[2]% maxIt ==0:
             acc=np.matrix(args_imu[3].mean(axis=0)).T
@@ -91,12 +88,13 @@ def SigmaPointFilter(rate, param_namespace):
                 xk=ukfOut.xk
                 Pk=ukfOut.Pk
 
-                Ck=rm.ColToRotmat(xk)
+                Ck=rm.ColToRotMat(xk)
                 rllptchyw=rm.RPYfromC(Ck)
                 for i in range(3):
                     rllptchyw[i]=rllptchyw[i]*180./m.pi
 
 
+                print rllptchyw
                 rpyMsg=Vector3()
 
                 rpyMsg.x=rllptchyw[0]
@@ -118,10 +116,8 @@ def ukf_help():
     print "  -p:<STR:namespace>          Specify node parameter workspace"
 
 if __name__=='__main__':
-    global maxIt
 
     rate=100
-    maxIt=1
     param_namespace='/ukf_filter'
 
     if len(sys.argv) > 1:

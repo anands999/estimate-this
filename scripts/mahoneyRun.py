@@ -9,7 +9,12 @@ import attitude_estimators
 from sensor_msgs.msg import Imu, MagneticField
 from geometry_msgs.msg import Vector3
 
-global maxIt
+
+if rospy.has_param('/sensors/maxIter'):
+    maxIt=rospy.get_param('/sensors/maxIter')
+else:
+    maxIt=1
+
 
 def imu_measurement(data,args):
     #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
@@ -44,7 +49,6 @@ def mag_measurement(data,args):
     args[2][i%maxIt]=args[0]
 
 def mahoneyEstimator(rate, param_namespace):
-    global maxIt
 
     # get parameters
     filter_gains=[]
@@ -148,7 +152,6 @@ def mahoney_help():
     print "  -p:<STR:namespace>          Specify node parameter workspace"
 
 if __name__=='__main__':
-    global maxIt
 
     rate=100
     maxIt=1

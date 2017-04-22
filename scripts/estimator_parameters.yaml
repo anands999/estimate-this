@@ -2,7 +2,7 @@
 /earth/mag_vec_ned: [18886.3, -2349.7, 50389.2]
 /earth/grav_vec_ned: [0.0, 0.0, 9.81]
 
-#Mahoney Filter gains
+#Mahoney Filter parameters
 /mahoney_filter/kp: 1.0
 /mahoney_filter/Kbias: [0.05, 0.05, 0.05]  
 /mahoney_filter/imu_topic: "/imu/data_raw"
@@ -10,3 +10,10 @@
 /mahoney_filter/rpy_est_topic: "/mahoney_fil/RPY"
 /mahoney_filter/bias_est_topic: "/mahoney_fil/Bias"
 
+#SPF parameters
+/ukf_filter/imu_topic: "/imu/data_raw"
+/ukf_filter/mag_topic: "/imu/mag"
+/ukf_filter/rpy_est_topic: "/ukf_fil/RPY"
+/ukf_filter/bias_est_topic: "/ukf_fil/Bias"
+
+/sensors/maxIter: 1

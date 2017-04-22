@@ -10,7 +10,12 @@ import attitude_estimators
 from sensor_msgs.msg import Imu, MagneticField
 from geometry_msgs.msg import Vector3
 
-global maxIt
+
+if rospy.has_param('/sensors/maxIter'):
+    maxIt=rospy.get_param('/sensors/maxIter')
+else:
+    maxIt=1
+
 
 def accel_measurement(data,args):
     #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
@@ -43,7 +48,6 @@ def mag_measurement(data,args):
 
 
 def triadEstimation():
-    global maxIt
 
     rospy.init_node('triadEstimation', anonymous=True)
 
@@ -92,9 +96,8 @@ def triadEstimation():
         r.sleep()
 
 if __name__=='__main__':
-    global maxIt
     if len(sys.argv) is 1:
-        maxIt=100
+        maxIt=1
     else:
         maxIt=int(sys.argv[1])
 
