@@ -105,9 +105,6 @@ def mahoneyEstimator(rate, param_namespace):
             if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0:
 
                 Cba=attitude_estimators.triad(acc,mag)
-                rllptchyw=rm.RPYfromC(Cba)
-                for i in range(3):
-                    rllptchyw[i]=rllptchyw[i]*180./m.pi
 
                 derivatives=attitude_estimators.mahoneyPoisson(Cea, Cba, bhat, w_y_a,filter_gains)
                 before=now

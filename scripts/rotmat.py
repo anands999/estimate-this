@@ -40,7 +40,7 @@ def skew(a):
         a2=a.item(1)
         a3=a.item(2)
 
-    skew=np.matrix('{} {} {}; {} {} {}; {} {} {}'.format(0,-a3,a2,a3,0,-a1,-a2,a1,0))
+    skew=np.matrix('{} {} {}; {} {} {}; {} {} {}'.format(0.,-a3,a2,a3,0.,-a1,-a2,a1,0.))
     return skew
 
 def skewInv(A):
@@ -50,7 +50,10 @@ def skewInv(A):
         vec[0]=-A.item(5)
         vec[1]=A.item(2)
         vec[2]=-A.item(1)
-
+    elif type(A) is np.ndarray:
+        vec[0]=-A[1][2]
+        vec[1]=A[0][2]
+        vec[2]=-A[0][1]
     return vec
 
 def ProjAnti(A):
@@ -116,6 +119,9 @@ def poisson(C,w):
 
     return Cdot
 
+def discretePoisson(Ckm,w,dt):
+    Ck=la.expm(skew(-w*dt))*Ckm
+    return Ck
 
 def RPYfromC(C):
     if C is not np.matrix and C.size is not 9:
@@ -142,19 +148,20 @@ def RPYfromC(C):
     return [roll, pitch, yaw]
 
 def eulerIntegrateRotMat(C,Cdot,dt):
-#    print C
     C=C+Cdot*dt
-#    print C
-#    print "inside"
-#    print Cdot
+
     if abs(la.det(C)-1.0) > 1e-4:
-#        print "adjust", la.det(C)
         Ctst=np.real(la.inv(la.sqrtm(C*C.transpose(1,0))))
         Cout=np.matrix(Ctst)*C
     else:
         Cout=C
-#    print"----------------------------------------------------"
-#    print C
-#    print "******************************************************"
     return Cout
 
+def ColToRotMat(col):
+    C=la.expm(skew(col))
+    C=np.mat(C)
+    return C
+
+def RotMatToCol(C):
+    col=skewInv(la.logm(C))
+    return col

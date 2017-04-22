@@ -10,6 +10,8 @@ import rotmat as rm
 
 estimator_output=collections.namedtuple('Estimator_Output', ['Cdot','bdot'])
 
+StochFilterOutput=collections.namedtuple('StochFilterOut',['xk', 'Pk'])
+
 def triad(accel,mag):
 
     x2b=rm.col(rm.unit(mag))
@@ -49,7 +51,6 @@ def mahoneyPoisson(Cea, Cba, bhat, w_y_a, gains):
     Kbias=gains[1]
     Kbias=np.asmatrix(np.diag(Kbias))
 
-
     Cbe=Cba*Cea.T
 
 
@@ -63,3 +64,108 @@ def mahoneyPoisson(Cea, Cba, bhat, w_y_a, gains):
 
     mahoneyOut=estimator_output(Cdot=CeaDot,bdot=bhatDot)
     return mahoneyOut
+
+
+def rotmatUKF(xkm, Pkm, wk, Qk, Rk, mk, gk, dtk, kappa):
+#def rotmatUKF(xkm, Pkm, wk, Qk, dtk, kappa):
+
+    L=3
+    KL=float(L)+kappa
+    sqrtLK=m.sqrt(KL)
+
+    mu=np.mat(np.zeros([6,1]))
+
+    Sigzz=np.mat(np.zeros([6,6]))
+    Sigzz[0:3,0:3]=Pkm
+    Sigzz[3:6,3:6]=Qk
+
+    S=la.cholesky(Sigzz)
+    S=np.mat(S)
+
+    xk_prop=np.mat(np.zeros([3,1]))
+    xks_prop=np.mat(np.zeros([3,2*L+1]))
+
+    mu[0:3]=xkm
+
+    for i in range(2*L+1):
+        alpha=0.5/KL
+        if i == 2*L:
+            z=mu;
+            alpha=kappa/KL
+        elif i < L:
+            z=mu+sqrtLK*S[:,i]
+        else:
+            z=mu-sqrtLK*S[:,i]
+
+        Ckm = rm.ColToRotMat(z[0:3]+z[3:6])
+        Ck_prop = rm.discretePoisson(Ckm, wk,dtk)
+        xks_prop[:,i] = rm.RotMatToCol(Ck_prop)
+        xk_prop=xk_prop + alpha*xks_prop[:,i]
+
+    Pk_prop=np.mat(np.zeros([L,L]))
+
+    for i in range(2*L+1):
+        alpha=0.5/KL
+        if i == 2*L:
+            alpha=kappa/KL
+
+        err=xks_prop[:,i]-xk_prop
+        Pk_prop=Pk_prop+alpha*err*err.T
+
+
+    # unitized gravity vector
+    g0=constants.grav_vec_hat
+
+    # magnetic dipole
+    m0=constants.mag_vec_hat
+
+    Cmeas=triad(gk,mk)
+    Ckis=np.zeros([3,3,2*L+1])
+    Ck_mean=np.mat(np.eye(3))
+
+    mu=np.mat(np.zeros([6,1]))
+    mu[0:3]=xk_prop
+
+    for i in range(2*L+1):
+        alpha=0.5/KL
+        if i == 2*L:
+            alpha=kappa/KL
+        elif i < L:
+            z=mu+sqrtLK*S[:,i]
+        else:
+            z=mu-sqrtLK*S[:,i]
+
+        Ckm=rm.ColToRotMat(z[0:3])
+        mki=Ckm*m0
+        gki=Ckm*g0
+        Cki=rm.ColToRotMat(z[3:6])*triad(gki,mki)
+        Ckis[:,:,i]=np.array(Cki)
+        dC=rm.RotMatToCol(Cki)
+        rCki=rm.ColToRotMat(alpha*dC)
+        Ck_mean=rCki*Ck_mean
+
+    Sigyy=np.mat(np.zeros([3,3]))
+    Sigxy=Sigyy
+
+    for i in range(2*L+1):
+        alpha=0.5/KL
+        if i == 2*L:
+            alpha=kappa/KL
+
+        err=xks_prop[:,i]-xk_prop
+        Cki=np.mat(Ckis[:,:,i])
+        m_err=rm.skewInv(rm.ProjAnti(Cki.T*Ck_mean))
+
+        Sigyy=Sigyy+alpha*(m_err*m_err.T)
+        Sigxy=Sigxy+alpha*(err*m_err.T)
+
+
+    K_gain=Sigxy*la.inv(Sigyy)
+    m_err=rm.skewInv(rm.ProjAnti(Cmeas.T*Ck_mean))
+
+    xk=xk_prop+K_gain*m_err
+    Pk=Pk_prop-K_gain*Sigxy.T
+
+    ukfOut=StochFilterOutput(xk, Pk)
+
+    return ukfOut

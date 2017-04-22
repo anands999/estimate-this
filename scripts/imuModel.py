@@ -9,14 +9,14 @@ import constants
 from sensor_msgs.msg import Imu, MagneticField
 from geometry_msgs.msg import Vector3
 
-def imuModel(r0,p0,y0,w0):
+def imuModel(r0,p0,y0,w0,rate):
 
     rospy.init_node('imuModel', anonymous=True)
 
     pub_ImuMeas=rospy.Publisher('/imu/data_raw',Imu, queue_size=10)
     pub_MagField=rospy.Publisher('/imu/mag',MagneticField,queue_size=10)
     pub_EulerAng=rospy.Publisher('/imu/EulAngData',Vector3,queue_size=10)
-    r=rospy.Rate(100)
+    r=rospy.Rate(rate)
     C=rm.rotRPY(r0,p0,y0)
 
 
@@ -75,20 +75,52 @@ def imuModel(r0,p0,y0,w0):
 
         r.sleep()
 
+def imuModel_help():
+    print
+    print "imuModel_help.py - IMU model. Provides grav and mag measurements. "
+    print " "
+    print "Arguments:"
+    print "  -e:<r,p,y>        Initial attitude given in Euler angles [rad]."
+    print "  -w:<wx,wy,wz>     Initial angular velocity [rad/s]"
+
 if __name__=='__main__':
+
+    r0 = 0.0
+    p0 = 0.0
+    y0 = 0.0
+    w0 = np.matrix('0.;0.;0.')
+    rate=100
+
+
     if len(sys.argv) == 1:
-        r0 = 0.0
-        p0 = 0.0
-        y0 = 0.0
+        imuModel_help()
+        sys.exit()
+    elif len(sys.argv) > 1:
+        for x in sys.argv:
+            y=x.split(':')
+            if y[0] == "-e":
+                rpy = y[1].split(",")
+                r0 = float(rpy[0])
+                p0 = float(rpy[1])
+                y0 = float(rpy[2])
 
-        w0 = np.matrix('0.;0.;0.')
-    elif len(sys.argv) < 8:
-        r0 = float(sys.argv[1])
-        p0 = float(sys.argv[2])
-        y0 = float(sys.argv[3])
-        wStr = sys.argv[4]+';'+(sys.argv[5]+';'+sys.argv[6])
-        w0 = np.matrix(wStr)
+            elif y[0] == "-w":
+                w0 = np.matrix(y[1].replace(",",";",2))
+            elif y[0] == "-r":
+                if y[1]>=1:
+                    rate=y[1]
+                else:
+                    rate=100
 
-    imuModel(r0,p0,y0,w0)
+            elif y[0] == "-h" or  y[0] == "-help":
+                imuModel_help()
+                sys.exit()
+    print
+    print "Initial roll, pitch, yaw: ", r0, p0, y0, " rad"
+    print "Initial angular velocity: ", w0.item(0), w0.item(1), w0.item(2), " rad/s"
+    print "          Operating rate: ", rate, " Hz"
+
+    imuModel(r0,p0,y0,w0,rate)
+
 
 
