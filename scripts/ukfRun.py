@@ -5,9 +5,11 @@ import sys
 import math as m
 import numpy as np
 import rotmat as rm
+import constants
 import attitude_estimators
 from sensor_msgs.msg import Imu, MagneticField
 from geometry_msgs.msg import Vector3
+from estimate_this.msg import rpy
 import sensorProc as sP
 
 if rospy.has_param('/sensors/maxIter'):
@@ -24,7 +26,6 @@ def SigmaPointFilter(rate, param_namespace):
         imu_topic=rospy.get_param(param_namespace+"/imu_topic")
         mag_topic=rospy.get_param(param_namespace+"/mag_topic")
         rpy_topic=rospy.get_param(param_namespace+"/rpy_est_topic")
-        bias_topic=rospy.get_param(param_namespace+"/bias_est_topic")
     else:
         print "Namespace \""+para_namespace+"\" not found. We're done here."
         sys.exit()
@@ -52,7 +53,7 @@ def SigmaPointFilter(rate, param_namespace):
     rospy.Subscriber(mag_topic,MagneticField,sP.mag_measurement,args_mag)
 
     #initiliaze filter output publisher
-    rpy_pub=rospy.Publisher(rpy_topic,Vector3, queue_size=10)
+    rpy_pub=rospy.Publisher(rpy_topic,rpy, queue_size=10)
     bias_pub=rospy.Publisher(bias_topic,Vector3, queue_size=10)
 
     r=rospy.Rate(rate)
@@ -91,15 +92,15 @@ def SigmaPointFilter(rate, param_namespace):
                 Ck=rm.ColToRotMat(xk)
                 rllptchyw=rm.RPYfromC(Ck)
                 for i in range(3):
-                    rllptchyw[i]=rllptchyw[i]*180./m.pi
+                    rllptchyw[i]=rllptchyw[i]*constants.rad2deg
 
 
-                print rllptchyw
-                rpyMsg=Vector3()
+                rpyMsg=rpy()
 
-                rpyMsg.x=rllptchyw[0]
-                rpyMsg.y=rllptchyw[1]
-                rpyMsg.z=rllptchyw[2]
+                rpyMsg.roll=rllptchyw[0]
+                rpyMsg.pitch=rllptchyw[1]
+                rpyMsg.yaw=rllptchyw[2]
+                rpyMsg.stamp=rospy.get_rostime()
                 rpy_pub.publish(rpyMsg)
 
 

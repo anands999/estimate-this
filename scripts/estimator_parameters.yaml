@@ -17,3 +17,6 @@
 /ukf_filter/bias_est_topic: "/ukf_fil/Bias"
 
 /sensors/maxIter: 1
+
+/calcError/error_topic: "/errorCalc/RPY_Err"
+/calcError/time_tol: 1e2

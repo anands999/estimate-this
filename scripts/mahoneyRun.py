@@ -5,48 +5,17 @@ import sys
 import math as m
 import numpy as np
 import rotmat as rm
+import sensorProc as sp
 import attitude_estimators
 from sensor_msgs.msg import Imu, MagneticField
 from geometry_msgs.msg import Vector3
-
+from estimate_this.msg import rpy
 
 if rospy.has_param('/sensors/maxIter'):
     maxIt=rospy.get_param('/sensors/maxIter')
 else:
     maxIt=1
 
-
-def imu_measurement(data,args):
-    #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
-
-    args[0][0]=data.linear_acceleration.x
-    args[0][1]=data.linear_acceleration.y
-    args[0][2]=data.linear_acceleration.z
-
-    args[1][0]=data.angular_velocity.x
-    args[1][1]=data.angular_velocity.y
-    args[1][2]=data.angular_velocity.z
-
-    args[2]=args[2]+1
-
-    i=args[2]
-
-    args[3][i%maxIt]=args[0]
-    args[4][i%maxIt]=args[1]
-    args[5]=data.header.stamp.secs+data.header.stamp.nsecs/1e9
-
-def mag_measurement(data,args):
-    #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
-
-    args[0][0]=data.magnetic_field.x
-    args[0][1]=data.magnetic_field.y
-    args[0][2]=data.magnetic_field.z
-
-    args[1]=args[1]+1
-
-    i=args[1]
-
-    args[2][i%maxIt]=args[0]
 
 def mahoneyEstimator(rate, param_namespace):
 
@@ -83,11 +52,11 @@ def mahoneyEstimator(rate, param_namespace):
     args_mag=[mag,j,mag_avg,magTime]
 
     #initialize subscriptions to sensor topics
-    rospy.Subscriber(imu_topic,Imu,imu_measurement,args_imu)
-    rospy.Subscriber(mag_topic,MagneticField,mag_measurement,args_mag)
+    rospy.Subscriber(imu_topic,Imu,sp.imu_measurement,args_imu)
+    rospy.Subscriber(mag_topic,MagneticField,sp.mag_measurement,args_mag)
 
     #initiliaze filter output publisher
-    rpy_pub=rospy.Publisher(rpy_topic,Vector3, queue_size=10)
+    rpy_pub=rospy.Publisher(rpy_topic,rpy, queue_size=10)
     bias_pub=rospy.Publisher(bias_topic,Vector3, queue_size=10)
 
     r=rospy.Rate(rate)
@@ -126,11 +95,17 @@ def mahoneyEstimator(rate, param_namespace):
                     rllptchyw[i]=rllptchyw[i]*180./m.pi
 
 
-                rpyMsg=Vector3()
+#                rpyMsg=Vector3()
+                rpyMsg=rpy()
 
-                rpyMsg.x=rllptchyw[0]
-                rpyMsg.y=rllptchyw[1]
-                rpyMsg.z=rllptchyw[2]
+#                rpyMsg.x=rllptchyw[0]
+#                rpyMsg.y=rllptchyw[1]
+#                rpyMsg.z=rllptchyw[2]
+                rpyMsg.roll=rllptchyw[0]
+                rpyMsg.pitch=rllptchyw[1]
+                rpyMsg.yaw=rllptchyw[2]
+
+                rpyMsg.stamp=rospy.get_rostime()
                 rpy_pub.publish(rpyMsg)
 
                 biasMsg=Vector3()
