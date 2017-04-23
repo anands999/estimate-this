@@ -8,6 +8,7 @@ import rotmat as rm
 import constants
 from sensor_msgs.msg import Imu, MagneticField
 from geometry_msgs.msg import Vector3
+from estimate_this.msg import rpy
 
 def imuModel(r0,p0,y0,w0,rate):
 
@@ -15,7 +16,9 @@ def imuModel(r0,p0,y0,w0,rate):
 
     pub_ImuMeas=rospy.Publisher('/imu/data_raw',Imu, queue_size=10)
     pub_MagField=rospy.Publisher('/imu/mag',MagneticField,queue_size=10)
-    pub_EulerAng=rospy.Publisher('/imu/EulAngData',Vector3,queue_size=10)
+
+    pub_EulerAng=rospy.Publisher('/imu/EulAngData',rpy,queue_size=10)
+
     r=rospy.Rate(rate)
     C=rm.rotRPY(r0,p0,y0)
 
@@ -43,7 +46,6 @@ def imuModel(r0,p0,y0,w0,rate):
         # Initialise publisher messages, assign values, publish
         imuMeas=Imu()
         magfldMeas=MagneticField()
-        rpyMeas=Vector3()
         imuMeas.header.stamp=rospy.Time.now()
         imuMeas.angular_velocity.x=w[0]
         imuMeas.angular_velocity.y=w[1]
@@ -64,9 +66,16 @@ def imuModel(r0,p0,y0,w0,rate):
 
         rpyOut=rm.RPYfromC(C)
 
-        rpyMeas.x=rpyOut[0]*180/m.pi
-        rpyMeas.y=rpyOut[1]*180/m.pi
-        rpyMeas.z=rpyOut[2]*180/m.pi
+
+        rpyMeas=rpy()
+#        rpyMeas.x=rpyOut[0]*180/m.pi
+#        rpyMeas.y=rpyOut[1]*180/m.pi
+#        rpyMeas.z=rpyOut[2]*180/m.pi
+
+        rpyMeas.roll = rpyOut[0]*180/m.pi
+        rpyMeas.pitch = rpyOut[1]*180/m.pi
+        rpyMeas.yaw = rpyOut[2]*180/m.pi
+        rpyMeas.stamp=rospy.get_rostime()
 
 
         pub_ImuMeas.publish(imuMeas)
@@ -99,10 +108,10 @@ if __name__=='__main__':
         for x in sys.argv:
             y=x.split(':')
             if y[0] == "-e":
-                rpy = y[1].split(",")
-                r0 = float(rpy[0])
-                p0 = float(rpy[1])
-                y0 = float(rpy[2])
+                rpyVec = y[1].split(",")
+                r0 = float(rpyVec[0])*constants.rad2deg
+                p0 = float(rpyVec[1])*constants.rad2deg
+                y0 = float(rpyVec[2])*constants.rad2deg
 
             elif y[0] == "-w":
                 w0 = np.matrix(y[1].replace(",",";",2))
