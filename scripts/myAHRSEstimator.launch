@@ -1,0 +1,10 @@
+<launch>
+  <arg name="param_file" default="$(find estimate_this)/scripts/estimator_parameters.yaml"/>
+  <rosparam command="load" file="$(arg param_file)"/>
+  
+  <group ns="AHRS_RUN">
+    <node pkg="myahrs_driver" type="myahrs_driver" name="myahrs_driver" />
+    <param name="port" value="/dev/ttyACM0" />
+    <param name="baud_rate" value="115200" />
+  </group>
+</launch>
