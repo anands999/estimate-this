@@ -1,0 +1,44 @@
+<launch>
+  <arg name="param_file" default="estimator_parameters.yaml"/>
+  <rosparam command="load" file="$(arg param_file)"/>
+  <arg name="IMU_w" default="0.0,0.0,0.0"/>
+  <arg name="IMU_rpy" default="0.0,0.0,0.0"/>
+ 
+  <node pkg="myahrs_driver" name="myahrs_node" type="myahrs_driver"/>
+  <node pkg="estimate_this" name="quat_listener" type="quatListener.py"/>
+
+  
+  <group ns="Att_Estimator">
+    <arg name="CF_rate" default="100"/>
+    <node pkg="estimate_this" name="forbes_filt" type="mahoneyRun.py" args="-r:$(arg CF_rate)" />
+  </group>
+
+
+
+
+<!--
+  <group ns="AttError_CompFilt">
+     <arg name="true_topic" default="/imu/EulAngData"/>
+     <arg name="est_topic" default="/mahoney_fil/RPY"/>
+     <node pkg="estimate_this" name="att_error_cf" type="errorNode.py" args="-t:$(arg true_topic) -e:$(arg est_topic)" />
+   </group>
+<!-->
+
+<!--
+
+    <group ns="Att_EstimatorUKF">
+        <arg name="CF_rate" default="100"/>
+        <node pkg="estimate_this" name="ukf_filt" type="ukfRun.py" args="-r:$(arg CF_rate)" />
+    </group>
+ <group ns="AttError">
+     <arg name="true_topic" default="/quatListener/rpy"/>
+     <arg name="est_topic" default="/mahoney_fil/RPY"/>
+     <node pkg="estimate_this" name="attError" type="errorNode.py" args="-t:$(arg true_topic) -e:$(arg est_topic)" />
+  </group>
+
+  
+ 
+
+<!-->
+
+</launch>

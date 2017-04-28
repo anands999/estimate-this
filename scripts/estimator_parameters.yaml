@@ -5,8 +5,8 @@
 #Mahoney Filter parameters
 /mahoney_filter/kp: 1.0
 /mahoney_filter/Kbias: [0.05, 0.05, 0.05]  
-/mahoney_filter/imu_topic: "/AHRS_RUN/imu/data_raw"
-/mahoney_filter/mag_topic: "/AHRS_RUN/imu/mag"
+/mahoney_filter/imu_topic: "/imu/data_raw"
+/mahoney_filter/mag_topic: "/imu/mag"
 /mahoney_filter/rpy_est_topic: "/mahoney_fil/RPY"
 /mahoney_filter/bias_est_topic: "/mahoney_fil/Bias"
 
@@ -20,3 +20,6 @@
 
 /calcError/error_topic: "/errorCalc/RPY_Err"
 /calcError/time_tol: 1e2
+
+/quatListener/rpy_topic: "/quatListener/rpy"
+/quatListener/imu_topic: "/imu/data"    
