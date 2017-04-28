@@ -21,8 +21,8 @@ def accel_measurement(data,args):
     #rospy.loginfo("%f %f %f",data.angular_velocity.x,data.angular_velocity.y,data.angular_velocity.z)
 
     args[0][0]=data.linear_acceleration.x
-    args[0][1]=data.linear_acceleration.y
-    args[0][2]=data.linear_acceleration.z
+    args[0][1]=-data.linear_acceleration.y
+    args[0][2]=-data.linear_acceleration.z
 
     args[1]=args[1]+1
 #    if args[1] > maxIt
@@ -65,12 +65,12 @@ def triadEstimation():
 
     rospy.loginfo("Running, with max it: %d", maxIt)
 
-    rospy.Subscriber("/IMU_RotData",Imu,accel_measurement,args_accel)
-    rospy.Subscriber("/IMU_MagData",MagneticField,mag_measurement,args_mag)
+    rospy.Subscriber("/imu/data_raw",Imu,accel_measurement,args_accel)
+    rospy.Subscriber("/imu/mag",MagneticField,mag_measurement,args_mag)
 
     pub=rospy.Publisher('triadAtt',Vector3, queue_size=10)
 
-    r=rospy.Rate(100)
+    r=rospy.Rate(5)
 
     while not rospy.is_shutdown():
         if args_accel[1]%maxIt ==0:
@@ -81,6 +81,7 @@ def triadEstimation():
 
                 Cinst=attitude_estimators.triad(acc,mag)
                 rllptchyw=rm.RPYfromC(Cinst)
+
                 for i in range(3):
                     rllptchyw[i]=rllptchyw[i]*180./m.pi
 
@@ -89,6 +90,9 @@ def triadEstimation():
                 triadMsg.x=rllptchyw[0]
                 triadMsg.y=rllptchyw[1]
                 triadMsg.z=rllptchyw[2]
+
+#                print acc
+#                print mag*1e9
                 print rllptchyw
                 pub.publish(triadMsg)
 

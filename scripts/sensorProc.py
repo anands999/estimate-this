@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import rospy
+import numpy as np
 
 if rospy.has_param('/sensors/maxIter'):
     maxIt=rospy.get_param('/sensors/maxIter')
@@ -37,3 +38,9 @@ def mag_measurement(data,args):
 
     args[2][i%maxIt]=args[0]
 
+def qua_measurement(data, args):
+    args[0][0] = data.orientation.w
+    args[0][1] = data.orientation.x
+    args[0][2] = data.orientation.y
+    args[0][3] = data.orientation.z
+#    args[0]=np.asmatrix(args[0])

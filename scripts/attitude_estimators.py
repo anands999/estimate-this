@@ -25,7 +25,6 @@ def triad(accel,mag):
 
     # unitized gravity vector
     x1a=constants.grav_vec_hat
-
     # magnetic dipole
     x2a=constants.mag_vec_hat
 
@@ -39,7 +38,7 @@ def triad(accel,mag):
     C1=np.column_stack((v1b,v2b,v3b))
     C2=np.column_stack((v1a,v2a,v3a))
 
-    C=C1*C2.transpose(1,0)
+    C=C1*C2.T
 
     return C
 
