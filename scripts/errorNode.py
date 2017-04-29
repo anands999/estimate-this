@@ -52,13 +52,12 @@ def errorNode(TrueTopic,EstTopic,rate,param_namespace):
     while not rospy.is_shutdown():
         ErrMsg=Vector3()
         time_tol=rospy.get_param(param_namespace+"/time_tol/")
-        if (rpy_etime.secs == rpy_ttime.secs) and (abs(rpy_etime.nsecs - rpy_ttime.nsecs) < time_tol) :
+#        if (rpy_etime.secs == rpy_ttime.secs) and (abs(rpy_etime.nsecs - rpy_ttime.nsecs) < time_tol) :
+        ErrMsg.x=(rpy_est[0]-rpy_true[0])
+        ErrMsg.y=(rpy_est[1]-rpy_true[1])
+        ErrMsg.z=(rpy_est[2]-rpy_true[2])
 
-            ErrMsg.x=(rpy_est[0]-rpy_true[0])*constants.rad2deg
-            ErrMsg.y=(rpy_est[1]-rpy_true[1])*constants.rad2deg
-            ErrMsg.z=(rpy_est[2]-rpy_true[2])*constants.rad2deg
-
-            error_pub.publish(ErrMsg)
+        error_pub.publish(ErrMsg)
 
         r.sleep()
 

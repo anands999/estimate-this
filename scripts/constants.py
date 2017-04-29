@@ -9,7 +9,9 @@ import rotmat
 #    mag_vec=np.asmatrix(rospy.get_param('/earth/mag_vec_ned'))
 #    mag_vec_hat=rotmat.unit(mag_vec).T
 #else:
-mag_vec=np.matrix('18886.3; -2349.7; 50389.2')
+#mag_vec=np.matrix('18886.3; -2349.7; 50389.2')
+mag_vec=np.matrix('1.0; 0.0; 0.0')
+
 mag_vec_hat=rotmat.unit(mag_vec)
 
 #if rospy.has_param('/earth/grav_vec_ned'):

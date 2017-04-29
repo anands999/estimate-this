@@ -62,8 +62,8 @@ def SigmaPointFilter(rate, param_namespace):
     #Initial covariance
     Pk=np.mat(np.eye(3))*1e-2
 
-    Qk=np.mat(np.eye(3))*1e-6
-    Rk=np.mat(np.eye(3))*1e-2
+    Qk=np.mat(np.eye(3))*1e-10
+    Rk=np.mat(np.eye(3))*1e-6
 
     now=rospy.get_time()
 
