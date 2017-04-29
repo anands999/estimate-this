@@ -1,5 +1,5 @@
 <launch>
-  <arg name="param_file" default="estimator_parameters.yaml"/>
+  <arg name="param_file" default="$(find estimate_this)/scripts/estimator_parameters.yaml"/>
   <rosparam command="load" file="$(arg param_file)"/>
   <arg name="IMU_w" default="0.0,0.0,0.0"/>
   <arg name="IMU_rpy" default="0.0,0.0,0.0"/>
