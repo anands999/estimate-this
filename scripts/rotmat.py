@@ -120,11 +120,12 @@ def discretePoisson(Ckm,w,dt):
 
 def RPYfromC(C):
     zero_tol=1e-8
+    C=C.T
     if C is not np.matrix and C.size is not 9:
         print 'Matrix not the right size'
         sys.exit()
     else:
-        s1c2=C.item(2,1)#-float(C[2][1])
+        s1c2=-C.item(2,1)#-float(C[2][1])
         c1c2=C.item(2,2) #float(C[2][2])
         if (abs(s1c2) > zero_tol) and (abs(c1c2) > zero_tol):
             roll=np.arctan2(s1c2,c1c2)
@@ -138,7 +139,7 @@ def RPYfromC(C):
                 pitch=np.arcsin(s2)
 
             c2c3=C.item(0,0)  #float(C[0][0])
-            c2s3=C.item(1,0) #float(C[1][0])
+            c2s3=-C.item(1,0) #float(C[1][0])
             yaw=np.arctan2(c2s3,c2c3)
 
         else:
