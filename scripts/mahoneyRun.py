@@ -30,7 +30,7 @@ def mahoneyEstimator(rate, param_namespace):
         rpy_topic=rospy.get_param(param_namespace+"/rpy_est_topic")
         bias_topic=rospy.get_param(param_namespace+"/bias_est_topic")
     else:
-        print "Namespace \""+para_namespace+"\" not found. We're done here."
+        print "Namespace \""+param_namespace+"\" not found. We're done here."
         sys.exit()
 
     rospy.init_node('mahoneyEstimator', anonymous=True)
@@ -74,7 +74,9 @@ def mahoneyEstimator(rate, param_namespace):
             acc=np.matrix(args_imu[3].mean(axis=0)).T
             w_y_a=np.matrix(args_imu[4].mean(axis=0)).T
             mag=np.matrix(args_mag[2].mean(axis=0)).T
-
+#        acc=np.mat(args_imu[0]).T
+#        w_y_a=np.mat(args_imu[1]).T
+#        mag=np.mat(args_mag[0]).T
             if np.linalg.norm(mag,2) != 0 and np.linalg.norm(acc,2) != 0:
 
                 Cba=attitude_estimators.triad(acc,mag)
@@ -115,7 +117,7 @@ def mahoneyEstimator(rate, param_namespace):
                 bias_pub.publish(biasMsg)
 
 
-        r.sleep()
+    r.sleep()
 
 def mahoney_help():
     print

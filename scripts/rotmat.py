@@ -68,23 +68,18 @@ def rotRPY(r,p,y):
 
 def unit(x):
     if type(x) is np.ndarray:
-        if np.dot(x,x) != 1:
-            axis=x/np.linalg.norm(x,2)
-        else:
-            axis=x
+        xproc=np.asmatrix(x)
+    else:
+        xproc=x
 
-    elif type(x) is np.matrix:
-        xT=x.T
-        if x.shape[0] is 3 and x.shape[1] is 1:
-            dotP=float(np.dot(xT,x))
-        else:
-            dotP=float(np.dot(x,xT))
+    xT=xproc.T
 
-        if dotP != 1:
-            axis=x/np.linalg.norm(x,2)
-        else:
-            axis=x
+    if xproc.shape[0] is 3 and xproc.shape[1] is 1:
+        dotP=float(np.dot(xT,xproc))
+    else:
+        dotP=float(np.dot(xproc,xT))
 
+    axis=x/np.sqrt(dotP)
     return axis
 
 def col(x):
@@ -124,26 +119,35 @@ def discretePoisson(Ckm,w,dt):
     return Ck
 
 def RPYfromC(C):
+    zero_tol=1e-8
+    C=C.T
     if C is not np.matrix and C.size is not 9:
         print 'Matrix not the right size'
         sys.exit()
     else:
         s1c2=-C.item(2,1)#-float(C[2][1])
         c1c2=C.item(2,2) #float(C[2][2])
-        roll=np.arctan2(s1c2,c1c2)
+        if (abs(s1c2) > zero_tol) and (abs(c1c2) > zero_tol):
+            roll=np.arctan2(s1c2,c1c2)
+            c1=np.cos(roll)
+            s2=C.item(2,0) #float(C[2][0])
 
-        c1=np.cos(roll)
-        s2=C.item(2,0) #float(C[2][0])
+            if abs(c1) > zero_tol:
+                c2=c1c2/c1
+                pitch=np.arctan2(s2,c2)
+            else:
+                pitch=np.arcsin(s2)
 
-        if abs(c1) > 1e-3:
-            c2=c1c2/c1
-            pitch=np.arctan2(s2,c2)
+            c2c3=C.item(0,0)  #float(C[0][0])
+            c2s3=-C.item(1,0) #float(C[1][0])
+            yaw=np.arctan2(c2s3,c2c3)
+
         else:
+            s2=C.item(2,0) #float(C[2][0])
             pitch=np.arcsin(s2)
+            roll=np.arctan(C.item(0,1)/C.item(1,1))
+            yaw=0.0
 
-        c2c3=C.item(0,0)  #float(C[0][0])
-        c2s3=-C.item(1,0) #float(C[1][0])
-        yaw=np.arctan2(c2s3,c2c3)
 
     return [roll, pitch, yaw]
 
@@ -165,3 +169,37 @@ def ColToRotMat(col):
 def RotMatToCol(C):
     col=skewInv(la.logm(C))
     return col
+
+def matDot(x):
+    if x.shape[0] ==1:
+        dotP=x*x.T
+    else:
+        dotP=x.T*x
+
+    return float(dotP)
+
+def matOuter(x,y):
+    if (x.shape[0] == 1) and (y.shape[0] == 1):
+        out = x.T*y
+    elif (x.shape[0] == 1) and (y.shape[0] > 1):
+        out = x.T*y.T
+    elif (x.shape[0] > 1) and (y.shape[0] > 1):
+        out = x*y.T
+    elif (x.shape[0] > 1) and (y.shape[0] == 1):
+        out = x*y
+    else:
+        print 'inputs are wrong dimensions'
+        out=-1
+    return out
+
+def quat2rot(q,sf):
+    if sf == 1:
+        eta=float(q.item(0))
+        eps=q[1:4]
+    else:
+        eta=float(q.item(3))
+        eps=q[0:3]
+
+    C=(eta*eta-matDot(eps))*eye()
+    C=C+2.0*matOuter(eps,eps)-2.0*eta*skew(eps)
+    return C

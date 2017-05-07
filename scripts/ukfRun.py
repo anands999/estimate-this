@@ -54,17 +54,16 @@ def SigmaPointFilter(rate, param_namespace):
 
     #initiliaze filter output publisher
     rpy_pub=rospy.Publisher(rpy_topic,rpy, queue_size=10)
-    bias_pub=rospy.Publisher(bias_topic,Vector3, queue_size=10)
 
     r=rospy.Rate(rate)
 
     #Initial state
     xk=np.mat('0.;0.;0.');
     #Initial covariance
-    Pk=np.mat(np.eye(3))*1e-4
+    Pk=np.mat(np.eye(3))*1e-2
 
-    Qk=np.mat(np.eye(3))*1e-6
-    Rk=np.mat(np.eye(3))*1e-4
+    Qk=np.mat(np.eye(3))*1e-10
+    Rk=np.mat(np.eye(3))*1e-6
 
     now=rospy.get_time()
 
