@@ -12,7 +12,6 @@ void imuData::imuCallBack(const sensor_msgs::Imu &msg)
   this->angVel(1) = msg.angular_velocity.y;
   this->angVel(2) = msg.angular_velocity.z;
 
-
 }
 
 imuData::imuData () {
