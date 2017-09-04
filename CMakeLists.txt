@@ -97,6 +97,8 @@ include_directories(
 
 ## Declare a C++ executable
 add_executable(spfRun scripts/spfRun.cpp scripts/imuData.cpp scripts/AttFiltClass.cpp scripts/rotmat.cpp)
+add_executable(pidNode scripts/PIDNode.cpp scripts/pidctrlclass.cpp)
+add_executable(errorNode scripts/errorNode.cpp)
 
 
 ## Add cmake target dependencies of the executable
@@ -108,6 +110,17 @@ target_link_libraries(spfRun
    ${catkin_LIBRARIES}
    armadillo
  )
+
+
+add_dependencies(pidNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(pidNode
+   ${catkin_LIBRARIES}
+)
+
+add_dependencies(errorNode ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+target_link_libraries(errorNode
+   ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
